@@ -1,0 +1,28 @@
+{
+  "name": "ravibpatel/jwt-session",
+  "type": "library",
+  "description": "Easily replace your existing session based authentication with JWT token-based authentication.",
+  "keywords": ["jwt","session save handler", "token", "authentication"],
+  "homepage": "https://github.com/ravibpatel/JWTSession",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Ravi Patel",
+      "email": "support@rbsoft.org",
+      "homepage": "http://rbsoft.org",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "email": "support@rbsoft.org"
+  },
+  "require": {
+    "php": ">=5.4.0",
+    "firebase/php-jwt": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "ravibpatel\\JWTSession\\": "src/"
+    }
+  }
+}
