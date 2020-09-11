@@ -1,4 +1,5 @@
 <?php
+
 namespace ravibpatel\JWTSession;
 
 use Exception;
@@ -33,7 +34,7 @@ class JWTSession implements SessionHandlerInterface
         $this->timeout = $timeout;
         $this->name = $name;
         $this->expireOnClose = $expireOnClose;
-        if(empty($domain)) {
+        if (empty($domain)) {
             $this->domain = $_SERVER["HTTP_HOST"];
         } else {
             $this->domain = $domain;
@@ -138,7 +139,7 @@ class JWTSession implements SessionHandlerInterface
     {
         if (isset($_COOKIE[$this->name])) {
             try {
-                $token = (array) JWT::decode($_COOKIE[$this->name], $this->secret_key, [self::ALGORITHM]);
+                $token = (array)JWT::decode($_COOKIE[$this->name], $this->secret_key, [self::ALGORITHM]);
                 return $token["data"];
             } catch (Exception $exception) {
                 return '';
@@ -182,9 +183,18 @@ class JWTSession implements SessionHandlerInterface
         ];
         $jwt = JWT::encode($token, $this->secret_key, self::ALGORITHM);
         $time = strtotime('+2 years');
-        if($this->expireOnClose) {
+        if ($this->expireOnClose) {
             $time = 0;
         }
-        return setcookie($this->name, $jwt, $time, '/', $this->domain);
+        if (PHP_VERSION_ID < 70300) {
+            return setcookie($this->name, $jwt, $time, '/; SameSite=Strict', $this->domain);
+        } else {
+            return setcookie($this->name, $jwt, [
+                'expires' => $time,
+                'path' => '/',
+                'domain' => $this->domain,
+                'samesite' => 'Strict'
+            ]);
+        }
     }
 }
