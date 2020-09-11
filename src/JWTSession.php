@@ -12,7 +12,7 @@ class JWTSession implements SessionHandlerInterface
 
     private $timeout;
 
-    private $secret_key;
+    private $secretKey;
 
     private $name;
 
@@ -20,20 +20,28 @@ class JWTSession implements SessionHandlerInterface
 
     private $domain;
 
+    private $samesite;
+
+    private $secure;
+
     /**
      * JWTSession constructor.
      * @param int $timeout
-     * @param string $secret_key
+     * @param string $secretKey
      * @param bool $expireOnClose
      * @param string $name
      * @param string $domain
+     * @param string $samesite
+     * @param bool $secure
      */
-    public function __construct($timeout, $secret_key, $expireOnClose = false, $name = 'AUTH_BEARER', $domain = null)
+    public function __construct($timeout, $secretKey, $expireOnClose = false, $name = 'AUTH_BEARER', $domain = null, $samesite = 'Lax', $secure = false)
     {
-        $this->secret_key = $secret_key;
+        $this->secretKey = $secretKey;
         $this->timeout = $timeout;
         $this->name = $name;
         $this->expireOnClose = $expireOnClose;
+        $this->samesite = $samesite;
+        $this->secure = $secure;
         if (empty($domain)) {
             $this->domain = $_SERVER["HTTP_HOST"];
         } else {
@@ -139,7 +147,7 @@ class JWTSession implements SessionHandlerInterface
     {
         if (isset($_COOKIE[$this->name])) {
             try {
-                $token = (array)JWT::decode($_COOKIE[$this->name], $this->secret_key, [self::ALGORITHM]);
+                $token = (array)JWT::decode($_COOKIE[$this->name], $this->secretKey, [self::ALGORITHM]);
                 return $token["data"];
             } catch (Exception $exception) {
                 return '';
@@ -181,19 +189,20 @@ class JWTSession implements SessionHandlerInterface
             'exp'  => $expire,         // Expiration Time: The expiration time on or after which the JWT MUST NOT be accepted for processing
             'data' => $session_data    // Session data
         ];
-        $jwt = JWT::encode($token, $this->secret_key, self::ALGORITHM);
+        $jwt = JWT::encode($token, $this->secretKey, self::ALGORITHM);
         $time = strtotime('+2 years');
         if ($this->expireOnClose) {
             $time = 0;
         }
         if (PHP_VERSION_ID < 70300) {
-            return setcookie($this->name, $jwt, $time, '/; SameSite=Strict', $this->domain);
+            return setcookie($this->name, $jwt, $time, "/; SameSite={$this->samesite}", $this->domain, $this->secure);
         } else {
             return setcookie($this->name, $jwt, [
                 'expires' => $time,
                 'path' => '/',
                 'domain' => $this->domain,
-                'samesite' => 'Strict'
+                'samesite' => $this->samesite,
+                'secure' => $this->secure
             ]);
         }
     }
