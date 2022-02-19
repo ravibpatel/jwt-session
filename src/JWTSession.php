@@ -3,7 +3,8 @@
 namespace ravibpatel\JWTSession;
 
 use Exception;
-use \Firebase\JWT\JWT;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 use SessionHandlerInterface;
 
 class JWTSession implements SessionHandlerInterface
@@ -86,14 +87,14 @@ class JWTSession implements SessionHandlerInterface
     /**
      * Destroy a session
      * @link http://php.net/manual/en/sessionhandlerinterface.destroy.php
-     * @param string $session_id The session ID being destroyed.
+     * @param string $id The session ID being destroyed.
      * @return bool <p>
      * The return value (usually TRUE on success, FALSE on failure).
      * Note this value is returned internally to PHP for processing.
      * </p>
      * @since 5.4.0
      */
-    public function destroy($session_id)
+    public function destroy($id)
     {
         return setcookie($this->name, "", time() - 3600, '/', $this->domain);
     }
@@ -101,7 +102,7 @@ class JWTSession implements SessionHandlerInterface
     /**
      * Cleanup old sessions
      * @link http://php.net/manual/en/sessionhandlerinterface.gc.php
-     * @param int $maxlifetime <p>
+     * @param int $max_lifetime <p>
      * Sessions that have not updated for
      * the last maxlifetime seconds will be removed.
      * </p>
@@ -111,7 +112,7 @@ class JWTSession implements SessionHandlerInterface
      * </p>
      * @since 5.4.0
      */
-    public function gc($maxlifetime)
+    public function gc($max_lifetime)
     {
         return true;
     }
@@ -119,7 +120,7 @@ class JWTSession implements SessionHandlerInterface
     /**
      * Initialize session
      * @link http://php.net/manual/en/sessionhandlerinterface.open.php
-     * @param string $save_path The path where to store/retrieve the session.
+     * @param string $path The path where to store/retrieve the session.
      * @param string $name The session name.
      * @return bool <p>
      * The return value (usually TRUE on success, FALSE on failure).
@@ -127,7 +128,7 @@ class JWTSession implements SessionHandlerInterface
      * </p>
      * @since 5.4.0
      */
-    public function open($save_path, $name)
+    public function open($path, $name)
     {
         return true;
     }
@@ -135,7 +136,7 @@ class JWTSession implements SessionHandlerInterface
     /**
      * Read session data
      * @link http://php.net/manual/en/sessionhandlerinterface.read.php
-     * @param string $session_id The session id to read data for.
+     * @param string $id The session id to read data for.
      * @return string <p>
      * Returns an encoded string of the read data.
      * If nothing was read, it must return an empty string.
@@ -143,11 +144,11 @@ class JWTSession implements SessionHandlerInterface
      * </p>
      * @since 5.4.0
      */
-    public function read($session_id)
+    public function read($id)
     {
         if (isset($_COOKIE[$this->name])) {
             try {
-                $token = (array)JWT::decode($_COOKIE[$this->name], $this->secretKey, [self::ALGORITHM]);
+                $token = (array)JWT::decode($_COOKIE[$this->name], new Key($this->secretKey, self::ALGORITHM));
                 return $token["data"];
             } catch (Exception $exception) {
                 return '';
@@ -160,8 +161,8 @@ class JWTSession implements SessionHandlerInterface
      * Write session data
      * @link http://php.net/manual/en/sessionhandlerinterface.write.php
      * @link https://tools.ietf.org/html/rfc7519#section-4.1
-     * @param string $session_id The session id.
-     * @param string $session_data <p>
+     * @param string $id The session id.
+     * @param string $data <p>
      * The encoded session data. This data is the
      * result of the PHP internally encoding
      * the $_SESSION superglobal to a serialized
@@ -174,9 +175,9 @@ class JWTSession implements SessionHandlerInterface
      * </p>
      * @since 5.4.0
      */
-    public function write($session_id, $session_data)
+    public function write($id, $data)
     {
-        $tokenId = $session_id;
+        $tokenId = $id;
         $issuedAt = time();
         $notBefore = $issuedAt;
         $expire = $notBefore + $this->timeout * 60;
@@ -187,7 +188,7 @@ class JWTSession implements SessionHandlerInterface
             'iss'  => $serverName,     // Issuer: Server that issued the JWT
             'nbf'  => $notBefore,      // Not Before: The time before which the JWT MUST NOT be accepted for processing
             'exp'  => $expire,         // Expiration Time: The expiration time on or after which the JWT MUST NOT be accepted for processing
-            'data' => $session_data    // Session data
+            'data' => $data            // Session data
         ];
         $jwt = JWT::encode($token, $this->secretKey, self::ALGORITHM);
         $time = strtotime('+2 years');

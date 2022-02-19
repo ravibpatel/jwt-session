@@ -9,7 +9,7 @@
     {
       "name": "Ravi Patel",
       "email": "support@rbsoft.org",
-      "homepage": "http://rbsoft.org",
+      "homepage": "https://rbsoft.org",
       "role": "Developer"
     }
   ],
@@ -18,7 +18,7 @@
   },
   "require": {
     "php": ">=5.4.0",
-    "firebase/php-jwt": "*"
+    "firebase/php-jwt": "^6.0.0"
   },
   "autoload": {
     "psr-4": {
