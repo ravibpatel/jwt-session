@@ -17,7 +17,7 @@
     "email": "support@rbsoft.org"
   },
   "require": {
-    "php": ">=5.4.0",
+    "php": ">=7.1",
     "firebase/php-jwt": "^6.0.0"
   },
   "autoload": {

@@ -31,11 +31,19 @@ class JWTSession implements SessionHandlerInterface
      * @param string $secretKey
      * @param bool $expireOnClose
      * @param string $name
-     * @param string $domain
+     * @param string|null $domain
      * @param string $samesite
      * @param bool $secure
      */
-    public function __construct($timeout, $secretKey, $expireOnClose = false, $name = 'AUTH_BEARER', $domain = null, $samesite = 'Lax', $secure = false)
+    public function __construct(
+        int    $timeout,
+        string $secretKey,
+        bool   $expireOnClose = false,
+        string $name = 'AUTH_BEARER',
+        string $domain = null,
+        string $samesite = 'Lax',
+        bool   $secure = false
+    )
     {
         $this->secretKey = $secretKey;
         $this->timeout = $timeout;
@@ -56,7 +64,7 @@ class JWTSession implements SessionHandlerInterface
      * @param bool $startSession
      * @throws Exception
      */
-    public function setSessionHandler($startSession = true)
+    public function setSessionHandler(bool $startSession = true)
     {
         if (session_status() != PHP_SESSION_NONE) {
             throw new Exception('Session already started!');
@@ -72,78 +80,80 @@ class JWTSession implements SessionHandlerInterface
 
     /**
      * Close the session
-     * @link http://php.net/manual/en/sessionhandlerinterface.close.php
+     * @link https://php.net/manual/en/sessionhandlerinterface.close.php
      * @return bool <p>
      * The return value (usually TRUE on success, FALSE on failure).
      * Note this value is returned internally to PHP for processing.
      * </p>
-     * @since 5.4.0
+     * @since 5.4
      */
-    public function close()
+    public function close(): bool
     {
         return true;
     }
 
     /**
      * Destroy a session
-     * @link http://php.net/manual/en/sessionhandlerinterface.destroy.php
+     * @link https://php.net/manual/en/sessionhandlerinterface.destroy.php
      * @param string $id The session ID being destroyed.
      * @return bool <p>
      * The return value (usually TRUE on success, FALSE on failure).
      * Note this value is returned internally to PHP for processing.
      * </p>
-     * @since 5.4.0
+     * @since 5.4
      */
-    public function destroy($id)
+    public function destroy($id): bool
     {
         return setcookie($this->name, "", time() - 3600, '/', $this->domain);
     }
 
     /**
      * Cleanup old sessions
-     * @link http://php.net/manual/en/sessionhandlerinterface.gc.php
+     * @link https://php.net/manual/en/sessionhandlerinterface.gc.php
      * @param int $max_lifetime <p>
      * Sessions that have not updated for
      * the last maxlifetime seconds will be removed.
      * </p>
-     * @return bool <p>
-     * The return value (usually TRUE on success, FALSE on failure).
+     * @return int|false <p>
+     * Returns the number of deleted sessions on success, or false on failure. Prior to PHP version 7.1, the function returned true on success.
      * Note this value is returned internally to PHP for processing.
      * </p>
-     * @since 5.4.0
+     * @since 5.4
      */
+    #[\ReturnTypeWillChange]
     public function gc($max_lifetime)
     {
-        return true;
+        return 0;
     }
 
     /**
      * Initialize session
-     * @link http://php.net/manual/en/sessionhandlerinterface.open.php
+     * @link https://php.net/manual/en/sessionhandlerinterface.open.php
      * @param string $path The path where to store/retrieve the session.
      * @param string $name The session name.
      * @return bool <p>
      * The return value (usually TRUE on success, FALSE on failure).
      * Note this value is returned internally to PHP for processing.
      * </p>
-     * @since 5.4.0
+     * @since 5.4
      */
-    public function open($path, $name)
+    public function open($path, $name): bool
     {
         return true;
     }
 
     /**
      * Read session data
-     * @link http://php.net/manual/en/sessionhandlerinterface.read.php
+     * @link https://php.net/manual/en/sessionhandlerinterface.read.php
      * @param string $id The session id to read data for.
-     * @return string <p>
+     * @return string|false <p>
      * Returns an encoded string of the read data.
-     * If nothing was read, it must return an empty string.
+     * If nothing was read, it must return false.
      * Note this value is returned internally to PHP for processing.
      * </p>
-     * @since 5.4.0
+     * @since 5.4
      */
+    #[\ReturnTypeWillChange]
     public function read($id)
     {
         if (isset($_COOKIE[$this->name])) {
@@ -151,16 +161,15 @@ class JWTSession implements SessionHandlerInterface
                 $token = (array)JWT::decode($_COOKIE[$this->name], new Key($this->secretKey, self::ALGORITHM));
                 return $token["data"];
             } catch (Exception $exception) {
-                return '';
+                return false;
             }
         }
-        return '';
+        return false;
     }
 
     /**
      * Write session data
-     * @link http://php.net/manual/en/sessionhandlerinterface.write.php
-     * @link https://tools.ietf.org/html/rfc7519#section-4.1
+     * @link https://php.net/manual/en/sessionhandlerinterface.write.php
      * @param string $id The session id.
      * @param string $data <p>
      * The encoded session data. This data is the
@@ -173,9 +182,9 @@ class JWTSession implements SessionHandlerInterface
      * The return value (usually TRUE on success, FALSE on failure).
      * Note this value is returned internally to PHP for processing.
      * </p>
-     * @since 5.4.0
+     * @since 5.4
      */
-    public function write($id, $data)
+    public function write($id, $data): bool
     {
         $tokenId = $id;
         $issuedAt = time();
