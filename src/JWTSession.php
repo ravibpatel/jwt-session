@@ -120,8 +120,7 @@ class JWTSession implements SessionHandlerInterface
      * </p>
      * @since 5.4
      */
-    #[\ReturnTypeWillChange]
-    public function gc($max_lifetime)
+    public function gc($max_lifetime): int
     {
         return 0;
     }
@@ -164,7 +163,7 @@ class JWTSession implements SessionHandlerInterface
                 return false;
             }
         }
-        return false;
+        return '';
     }
 
     /**
