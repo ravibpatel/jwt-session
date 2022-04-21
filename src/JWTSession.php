@@ -152,15 +152,14 @@ class JWTSession implements SessionHandlerInterface
      * </p>
      * @since 5.4
      */
-    #[\ReturnTypeWillChange]
-    public function read($id)
+    public function read($id): string
     {
         if (isset($_COOKIE[$this->name])) {
             try {
                 $token = (array)JWT::decode($_COOKIE[$this->name], new Key($this->secretKey, self::ALGORITHM));
                 return $token["data"];
             } catch (Exception $exception) {
-                return false;
+                return '';
             }
         }
         return '';
@@ -204,7 +203,7 @@ class JWTSession implements SessionHandlerInterface
             $time = 0;
         }
         if (PHP_VERSION_ID < 70300) {
-            return setcookie($this->name, $jwt, $time, "/; SameSite={$this->samesite}", $this->domain, $this->secure);
+            return setcookie($this->name, $jwt, $time, "/; SameSite=$this->samesite", $this->domain, $this->secure);
         } else {
             return setcookie($this->name, $jwt, [
                 'expires' => $time,
