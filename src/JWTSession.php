@@ -40,7 +40,7 @@ class JWTSession implements SessionHandlerInterface
         string $secretKey,
         bool   $expireOnClose = false,
         string $name = 'AUTH_BEARER',
-        string $domain = null,
+        string $domain = '',
         string $samesite = 'Lax',
         bool   $secure = false
     )
@@ -51,11 +51,7 @@ class JWTSession implements SessionHandlerInterface
         $this->expireOnClose = $expireOnClose;
         $this->samesite = $samesite;
         $this->secure = $secure;
-        if (empty($domain)) {
-            $this->domain = $_SERVER["HTTP_HOST"];
-        } else {
-            $this->domain = $domain;
-        }
+        $this->domain = $domain;
     }
 
     /**
