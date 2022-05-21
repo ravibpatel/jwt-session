@@ -100,7 +100,7 @@ class JWTSession implements SessionHandlerInterface
      */
     public function destroy($id): bool
     {
-        return setcookie($this->name, "", time() - 3600, '/', $this->domain);
+        return $this->setCookie('', time() - 3600);
     }
 
     /**
@@ -153,7 +153,7 @@ class JWTSession implements SessionHandlerInterface
         if (isset($_COOKIE[$this->name])) {
             try {
                 $token = (array)JWT::decode($_COOKIE[$this->name], new Key($this->secretKey, self::ALGORITHM));
-                return $token["data"];
+                return $token['data'];
             } catch (Exception $exception) {
                 return '';
             }
@@ -198,11 +198,25 @@ class JWTSession implements SessionHandlerInterface
         if ($this->expireOnClose) {
             $time = 0;
         }
+        return $this->setCookie($jwt, $time);
+    }
+
+    /**
+     * Send a cookie
+     * @param string $value The value of the cookie.
+     * @param int $expires The time the cookie expires. This is a Unix timestamp so is in number of seconds since the epoch.
+     * @return bool <p>
+     * If output exists prior to calling this function, it will fail and return false.
+     * If it successfully runs, it will return true. This does not indicate whether the user accepted the cookie.
+     * </p>
+     */
+    private function setCookie(string $value, int $expires): bool
+    {
         if (PHP_VERSION_ID < 70300) {
-            return setcookie($this->name, $jwt, $time, "/; SameSite=$this->samesite", $this->domain, $this->secure);
+            return setcookie($this->name, $value, $expires, "/; SameSite=$this->samesite", $this->domain, $this->secure);
         } else {
-            return setcookie($this->name, $jwt, [
-                'expires' => $time,
+            return setcookie($this->name, $value, [
+                'expires' => $expires,
                 'path' => '/',
                 'domain' => $this->domain,
                 'samesite' => $this->samesite,
